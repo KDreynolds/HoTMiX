@@ -26,6 +26,12 @@ async function createNewProject(projectName, backend, frontend) {
     createProjectDirectory(projectName);
     await sleep(500); // Delay of 0.5 seconds
     copyTemplateFiles(projectName, backend, frontend);
+    if (backend === 'django') {
+        createManagePy(projectName);
+        createSettingsPy(projectName);
+        createUrlsPy(projectName);
+        createWSGIPy(projectName);
+    }
     await sleep(500); // Delay of 0.5 seconds
     installDependencies(projectName, backend);
     await sleep(500); // Delay of 0.5 seconds
@@ -55,11 +61,17 @@ function copyTemplateFiles(projectName, backend, frontend) {
     spinner.succeed(chalk.green('Template files copied successfully.'));
 
     // If the backend is Flask, copy the requirements.txt file
-    if (backend === 'flask') {
-        const requirementsSource = path.join(__dirname, '..', 'flask', 'requirements.txt');
+    if (backend === 'flask' || backend === 'django') {
+        const requirementsSource = path.join(__dirname, '..', backend, 'requirements.txt');
         const requirementsDestination = path.join(projectName, 'requirements.txt');
         fsExtra.copySync(requirementsSource, requirementsDestination);
         spinner.succeed(chalk.green('requirements.txt copied successfully.'));
+    }
+
+    if (backend === 'django') {
+        const oldProjectDir = path.join(projectName, 'mysite');
+        const newProjectDir = path.join(projectName, projectName);
+        fs.renameSync(oldProjectDir, newProjectDir);
     }
 }
 
@@ -78,6 +90,105 @@ function initializeGitRepository() {
     } catch (error) {
         spinner.fail(chalk.red(`Error initializing Git repository: ${error}`));
     }
+}
+
+function createManagePy(projectName) {
+    const managePyContent = `
+#!/usr/bin/env python
+"""Django's command-line utility for administrative tasks."""
+import os
+import sys
+
+def main():
+    """Run administrative tasks."""
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', '${projectName}.settings')
+    try:
+        from django.core.management import execute_from_command_line
+    except ImportError as exc:
+        raise ImportError(
+            "Couldn't import Django. Are you sure it's installed and "
+            "available on your PYTHONPATH environment variable? Did you "
+            "forget to activate a virtual environment?"
+        ) from exc
+    execute_from_command_line(sys.argv)
+
+if __name__ == '__main__':
+    main()
+    `;
+    fs.writeFileSync(path.join(projectName, 'manage.py'), managePyContent);
+}
+
+function createSettingsPy(projectName) {
+    const settingsPyContent = `
+# Django settings for ${projectName} project.
+
+SECRET_KEY = 'your-secret-key'
+
+# Application definition
+
+INSTALLED_APPS = [
+    '${projectName}.apps.${projectName}Config',
+    # other apps...
+]
+
+MIDDLEWARE = [
+    # default middleware...
+]
+
+ROOT_URLCONF = '${projectName}.urls'
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            # options...
+        },
+    },
+]
+
+WSGI_APPLICATION = '${projectName}.wsgi.application'
+
+# Database
+# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
+# rest of the settings...
+    `;
+    fs.writeFileSync(path.join(projectName, projectName, 'settings.py'), settingsPyContent);
+}
+
+function createUrlsPy(projectName) {
+    const urlsPyContent = `
+from django.contrib import admin
+from django.urls import path
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    # other urls...
+]
+    `;
+    fs.writeFileSync(path.join(projectName, projectName, 'urls.py'), urlsPyContent);
+}
+
+function createWSGIPy(projectName) {
+    const wsgiPyContent = `
+import os
+
+from django.core.wsgi import get_wsgi_application
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', '${projectName}.settings')
+
+application = get_wsgi_application()
+    `;
+    fs.writeFileSync(path.join(projectName, projectName, 'wsgi.py'), wsgiPyContent);
 }
 
 function provideInstructions(backend) {
@@ -104,6 +215,14 @@ function provideInstructions(backend) {
 3. Run 'npm start' to start the server.
 4. Visit the Express documentation for more information: https://expressjs.com/`));
             break;
+            case 'django':
+    console.log(chalk.blue(`1. Navigate to your project directory.
+2. Create a Python virtual environment with 'python -m venv env'.
+3. Activate the virtual environment.
+4. Install Django with 'pip install Django'.
+5. Run 'python manage.py runserver' to start the server.
+6. Visit the Django documentation for more information: https://docs.djangoproject.com/`));
+    break;
         default:
             console.log(chalk.red(`Please refer to the documentation for your chosen backend technology.`));
     }
@@ -124,7 +243,7 @@ program
                     type: 'list',
                     name: 'backend',
                     message: 'Which backend would you like to use?',
-                    choices: ['flask', 'gin', 'node'],
+                    choices: ['flask', 'gin', 'node', 'django'],
                 },
                 {
                     type: 'list',

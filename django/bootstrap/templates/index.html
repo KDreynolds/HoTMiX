@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to HoTMiX!</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <header class="bg-dark text-white text-center p-3">
+        <h1>Welcome to HoTMiX!</h1>
+    </header>
+    <main id="main-content" class="container py-4">
+        <section class="welcome-section">
+            <h2>Your project has been successfully created with HoTMiX!</h2>
+            <p>This is a simple SPA template integrated with HTMX. You can modify this template to start building your application.</p>
+            <a href="https://htmx.org/docs/" target="_blank" class="htmx-docs-link">Learn more about HTMX</a>
+        </section>
+		<section id="data-section">
+			<h2>Data Table</h2>
+			<table id="data-table">
+				<!-- Table Headers -->
+				<tr>
+					<th>ID</th>
+					<th>Name</th>
+					<th>Actions</th>
+				</tr>
+				<!-- Data Rows Fetched from Backend -->
+				{% for item in items %}
+				<tr>
+					<td>{{ item.id }}</td>
+					<td>{{ item.name }}</td>
+					<td>
+						<!-- Action buttons -->
+					</td>
+				</tr>
+				{% endfor %}
+			</table>
+			<button hx-get="/new_item_form" hx-target="#modal" hx-toggle="modal">Add New Item</button>
+		</section>
+		
+		<!-- Modal for Adding/Editing Items -->
+		<div id="modal" class="modal">
+			<!-- Content loaded dynamically by HTMX -->
+		</div>
+    </main>
+    <footer class="bg-light text-center py-3">
+        <p>Created with HoTMiX - Your HTMX scaffolding tool.</p>
+    </footer>
+    <script src="https://unpkg.com/htmx.org"></script>
+</body>
+</html>

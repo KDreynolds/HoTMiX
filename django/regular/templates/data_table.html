@@ -1,0 +1,21 @@
+<!-- data_table.html -->
+
+<table id="data-table" class="table">
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Actions</th>
+    </tr>
+    {% for item in items %}
+    <tr>
+        <td>{{ item.id }}</td>
+        <td>{{ item.name }}</td>
+        <td>
+            <a href="/edit-item-form/{{ item.id }}" hx-get="/edit-item-form/{{ item.id }}" hx-target="#modal" hx-toggle="modal">Edit</a>
+            <form action="/delete-item/{{ item.id }}" method="post" hx-post="/delete-item/{{ item.id }}" hx-target="#data-section">
+                <button type="submit">Delete</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
